@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% block title %}{{ annonce.titre }} — AgroTech{% endblock %}
+{% block description %}{{ annonce.description|truncatechars:160 }}{% endblock %}
+
+{% block extra_head %}
+{% if annonce.latitude and annonce.longitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  /* Fix conflit Tailwind CDN + Leaflet */
+  .leaflet-container img {
+    display: inline !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: auto !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .leaflet-tile-pane img {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .leaflet-container {
+    z-index: 1;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Breadcrumb -->
+  <nav class="text-xs text-gray-400 mb-6 flex items-center gap-1">
+    <a href="{% url 'home' %}" class="hover:text-emerald-600">Accueil</a>
+    <span>/</span>
+    <a href="{% url 'listings:liste' %}" class="hover:text-emerald-600">Terrains</a>
+    <span>/</span>
+    <span class="text-gray-600">{{ annonce.titre|truncatechars:40 }}</span>
+  </nav>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- ═══  COLONNE PRINCIPALE  ═══ -->
+    <div class="lg:col-span-2">
+
+      <!-- Photos gallery -->
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+        {% with photos=annonce.photos.all %}
+          {% if photos %}
+            <div class="relative h-80 sm:h-96 bg-emerald-50">
+              <img id="main-photo" src="{{ photos.0.image.url }}" alt="{{ annonce.titre }}"
+                   class="w-full h-full object-cover" />
+            </div>
+            {% if photos|length > 1 %}
+              <div class="flex gap-2 p-4 overflow-x-auto">
+                {% for photo in photos %}
+                  <img src="{{ photo.image.url }}" alt="Photo {{ forloop.counter }}"
+                       onclick="document.getElementById('main-photo').src = this.src"
+                       class="h-16 w-20 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-emerald-500 transition flex-shrink-0" />
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="h-72 flex flex-col items-center justify-center bg-emerald-50 text-emerald-300">
+              <svg class="w-20 h-20 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-sm font-medium text-emerald-400">Aucune photo disponible</p>
+            </div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Titre & description -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex items-start justify-between mb-4">
+          <h1 class="text-2xl font-bold text-gray-900 leading-tight">{{ annonce.titre }}</h1>
+          {% if user == annonce.vendeur %}
+            <div class="flex gap-2 ml-4">
+              <a href="{% url 'listings:modifier' annonce.pk %}"
+                 class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition">
+                Modifier
+              </a>
+              <a href="{% url 'listings:supprimer' annonce.pk %}"
+                 class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition">
+                Supprimer
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center gap-2 text-gray-500 text-sm mb-5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          {{ annonce.ville }} &mdash; {{ annonce.get_region_display }}
+          <span class="ml-3 text-xs text-gray-400">{{ annonce.vues }} vue{{ annonce.vues|pluralize }}</span>
+        </div>
+
+        <h2 class="font-semibold text-gray-900 mb-2 text-sm">Description</h2>
+        <div class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{{ annonce.description }}</div>
+      </div>
+
+      <!-- Caractéristiques -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Caractéristiques du terrain</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-emerald-50 rounded-xl p-4">
+            <div class="text-xs text-emerald-600 font-medium mb-1 uppercase tracking-wide">Surface</div>
+            <div class="text-xl font-bold text-emerald-800">{{ annonce.surface }} <span class="text-sm font-semibold">ha</span></div>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-4">
+            <div class="text-xs text-emerald-600 font-medium mb-1 uppercase tracking-wide">Prix/hectare</div>
+            <div class="text-xl font-bold text-emerald-800">
+              {% if annonce.prix_par_hectare %}{{ annonce.prix_par_hectare|floatformat:0 }} <span class="text-sm font-semibold">MAD</span>{% else %}N/A{% endif %}
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-medium mb-1 uppercase tracking-wide">Type de culture</div>
+            <div class="font-semibold text-gray-800 text-sm">{{ annonce.get_type_culture_display }}</div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-500 font-medium mb-1 uppercase tracking-wide">Titre foncier</div>
+            <div class="font-semibold text-gray-800 text-sm">{{ annonce.get_type_titre_foncier_display }}</div>
+          </div>
+        </div>
+
+        <!-- Équipements -->
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Équipements & accès</div>
+          <div class="flex gap-3 flex-wrap">
+            <div class="flex items-center gap-2 text-sm {% if annonce.acces_eau %}text-blue-700{% else %}text-gray-400{% endif %}">
+              <span class="text-base">💧</span>
+              <span class="font-medium">Accès à l'eau</span>
+              {% if not annonce.acces_eau %}<span class="text-xs">(non)</span>{% endif %}
+            </div>
+            <div class="flex items-center gap-2 text-sm {% if annonce.acces_route %}text-gray-700{% else %}text-gray-400{% endif %}">
+              <span class="text-base">🛣️</span>
+              <span class="font-medium">Route bitumée</span>
+              {% if not annonce.acces_route %}<span class="text-xs">(non)</span>{% endif %}
+            </div>
+            <div class="flex items-center gap-2 text-sm {% if annonce.electricite %}text-amber-700{% else %}text-gray-400{% endif %}">
+              <span class="text-base">⚡</span>
+              <span class="font-medium">Électricité</span>
+              {% if not annonce.electricite %}<span class="text-xs">(non)</span>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Localisation -->
+      {% if annonce.latitude and annonce.longitude %}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <h2 class="font-semibold text-gray-900">Localisation</h2>
+        </div>
+        <div id="detail-map" style="height:320px;"></div>
+        <div class="px-6 py-3 bg-gray-50 text-xs text-gray-400 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          La localisation est approximative. Contactez le vendeur pour une visite.
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          </svg>
+          <h2 class="font-semibold text-gray-900">Localisation</h2>
+        </div>
+        <p class="text-sm text-gray-500">
+          {{ annonce.ville }}, {{ annonce.get_region_display }}
+        </p>
+        <p class="text-xs text-gray-400 mt-1">Coordonnées GPS non renseignées par le vendeur.</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ═══  SIDEBAR DROITE  ═══ -->
+    <div class="space-y-5">
+
+      <!-- Prix -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="text-3xl font-extrabold text-emerald-700 mb-1">
+          {{ annonce.prix|floatformat:0 }} <span class="text-lg">MAD</span>
+        </div>
+        {% if annonce.prix_par_hectare %}
+          <div class="text-sm text-gray-400 mb-5">{{ annonce.prix_par_hectare|floatformat:0 }} MAD / hectare</div>
+        {% endif %}
+
+        {% with wa=annonce.vendeur.whatsapp_number %}
+          {% if wa %}
+            {% with msg="Bonjour, je suis intéressé par votre annonce sur AgroTech : "|add:annonce.titre %}
+            <a href="https://wa.me/{{ wa }}?text={{ msg|urlencode }}"
+               target="_blank" rel="noopener"
+               class="flex items-center justify-center gap-2.5 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md mb-3">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.121 1.533 5.849L.057 23.552a.75.75 0 00.906.919l5.849-1.476A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.964-1.359l-.355-.212-3.683.929.944-3.585-.232-.368A9.722 9.722 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+              </svg>
+              Contacter via WhatsApp
+            </a>
+            {% endwith %}
+          {% else %}
+            <div class="text-center py-3 bg-gray-50 rounded-xl text-xs text-gray-400">
+              Coordonnées disponibles à la connexion
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% if not user.is_authenticated %}
+          <p class="text-center text-xs text-gray-400 mt-2">
+            <a href="{% url 'accounts:connexion' %}" class="text-emerald-600 hover:underline">Connectez-vous</a> pour accéder à toutes les annonces
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Vendeur -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="font-semibold text-gray-900 mb-4 text-sm">Publié par</h3>
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
+            {{ annonce.vendeur.first_name|first|upper }}{{ annonce.vendeur.last_name|first|upper }}
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900 text-sm">{{ annonce.vendeur.get_full_name }}</div>
+            {% if annonce.vendeur.ville %}
+              <div class="text-xs text-gray-400">{{ annonce.vendeur.ville }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% if annonce.vendeur.bio %}
+          <p class="text-xs text-gray-500 mt-3 leading-relaxed">{{ annonce.vendeur.bio|truncatechars:120 }}</p>
+        {% endif %}
+        {% if user.is_authenticated and annonce.vendeur.telephone %}
+          <div class="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-700">
+            <span class="text-xs text-gray-400 block mb-1">Téléphone</span>
+            <span class="font-semibold">{{ annonce.vendeur.telephone }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Meta -->
+      <div class="bg-gray-50 rounded-xl p-4 text-xs text-gray-400 space-y-1">
+        <div>Publiée le {{ annonce.date_creation|date:"j F Y" }}</div>
+        <div>Réf. #{{ annonce.pk }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Annonces similaires -->
+  {% if autres %}
+    <div class="mt-12">
+      <h2 class="text-xl font-bold text-gray-900 mb-6">Terrains similaires dans la région</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for annonce in autres %}
+          {% include "partials/annonce_card.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if annonce.latitude and annonce.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const lat = {{ annonce.latitude }};
+  const lng = {{ annonce.longitude }};
+
+  const map = L.map('detail-map').setView([lat, lng], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18,
+  }).addTo(map);
+
+  const iconHtml = `
+    <div style="
+      background:#047857; color:white; border-radius:50% 50% 50% 0;
+      width:40px; height:40px; transform:rotate(-45deg);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid white;
+    ">
+      <span style="transform:rotate(45deg); font-size:16px;">🌿</span>
+    </div>`;
+
+  const icon = L.divIcon({
+    html: iconHtml,
+    className: '',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -42],
+  });
+
+  L.marker([lat, lng], { icon })
+    .addTo(map)
+    .bindPopup(`<strong style="font-size:13px;">{{ annonce.titre|escapejs }}</strong><br>
+                <span style="color:#6b7280;font-size:11px;">{{ annonce.ville|escapejs }}</span>`)
+    .openPopup();
+
+  // Cercle de zone approximative
+  L.circle([lat, lng], {
+    radius: 800,
+    color: '#047857',
+    fillColor: '#047857',
+    fillOpacity: 0.08,
+    weight: 1.5,
+    dashArray: '5, 5',
+  }).addTo(map);
+
+  // Ré-applique le fix CSS après Tailwind CDN et force un recalcul
+  setTimeout(() => {
+    const fix = document.getElementById('leaflet-tw-fix');
+    if (!fix) {
+      const s = document.createElement('style');
+      s.id = 'leaflet-tw-fix';
+      s.textContent = `
+        #detail-map .leaflet-tile { max-width:none!important; width:256px!important; height:256px!important; }
+        #detail-map img { display:inline!important; max-width:none!important; }
+      `;
+      document.head.appendChild(s);
+    }
+    map.invalidateSize();
+  }, 300);
+</script>
+{% endif %}
+{% endblock %}

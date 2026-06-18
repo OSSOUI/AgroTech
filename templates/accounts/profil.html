@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Mon profil — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Mon profil</h1>
+    <p class="text-gray-500 text-sm mt-1">Vos informations visibles par les acheteurs</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+
+    <!-- Avatar actuel -->
+    <div class="flex items-center gap-4 mb-7 pb-7 border-b border-gray-100">
+      {% if user.photo_profil %}
+        <img src="{{ user.photo_profil.url }}" class="w-16 h-16 rounded-2xl object-cover" />
+      {% else %}
+        <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-700 font-bold text-xl">
+          {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+        </div>
+      {% endif %}
+      <div>
+        <div class="font-bold text-gray-900">{{ user.get_full_name }}</div>
+        <div class="text-sm text-gray-400">{{ user.email }}</div>
+        <span class="inline-block mt-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+          Vendeur
+        </span>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate class="space-y-4">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.telephone.label }}</label>
+          {{ form.telephone }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.ville.label }}</label>
+          {{ form.ville }}
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.bio.label }}</label>
+        {{ form.bio }}
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.photo_profil.label }}</label>
+        {{ form.photo_profil }}
+      </div>
+      <div class="pt-2 flex gap-3">
+        <button type="submit"
+                class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">
+          Enregistrer
+        </button>
+        <a href="{% url 'accounts:tableau_de_bord' %}"
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-semibold text-sm transition">
+          Retour
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

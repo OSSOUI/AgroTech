@@ -1,0 +1,89 @@
+{% with photo=annonce.get_photo_principale %}
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 card-hover">
+  <!-- Photo -->
+  <a href="{{ annonce.get_absolute_url }}" class="block relative h-52 overflow-hidden bg-emerald-50">
+    {% if photo %}
+      <img src="{{ photo.image.url }}" alt="{{ annonce.titre }}"
+           class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+    {% else %}
+      <div class="w-full h-full flex flex-col items-center justify-center text-emerald-300">
+        <svg class="w-14 h-14 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-xs font-medium text-emerald-400">Aucune photo</span>
+      </div>
+    {% endif %}
+    <!-- Badge type culture -->
+    <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+      {{ annonce.get_type_culture_display }}
+    </span>
+  </a>
+
+  <!-- Content -->
+  <div class="p-5">
+    <div class="flex items-start justify-between mb-2">
+      <h3 class="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 flex-1 mr-2">
+        <a href="{{ annonce.get_absolute_url }}" class="hover:text-emerald-700 transition">
+          {{ annonce.titre }}
+        </a>
+      </h3>
+    </div>
+
+    <!-- Location -->
+    <div class="flex items-center gap-1 text-gray-400 text-xs mb-3">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      {{ annonce.ville }} &mdash; {{ annonce.get_region_display }}
+    </div>
+
+    <!-- Details row -->
+    <div class="flex items-center gap-3 text-xs text-gray-500 mb-4">
+      <span class="flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+        </svg>
+        {{ annonce.surface }} ha
+      </span>
+      <span class="text-gray-300">|</span>
+      <span class="flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        {{ annonce.get_type_titre_foncier_display }}
+      </span>
+    </div>
+
+    <!-- Amenities -->
+    <div class="flex gap-2 mb-4">
+      {% if annonce.acces_eau %}
+        <span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">💧 Eau</span>
+      {% endif %}
+      {% if annonce.acces_route %}
+        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">🛣️ Route</span>
+      {% endif %}
+      {% if annonce.electricite %}
+        <span class="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">⚡ Électricité</span>
+      {% endif %}
+    </div>
+
+    <!-- Price -->
+    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+      <div>
+        <div class="text-xl font-extrabold text-emerald-700">
+          {{ annonce.prix|floatformat:0 }} <span class="text-sm font-semibold">MAD</span>
+        </div>
+        {% if annonce.prix_par_hectare %}
+          <div class="text-xs text-gray-400">{{ annonce.prix_par_hectare|floatformat:0 }} MAD/ha</div>
+        {% endif %}
+      </div>
+      <a href="{{ annonce.get_absolute_url }}"
+         class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+        Voir l'annonce
+      </a>
+    </div>
+  </div>
+</div>
+{% endwith %}

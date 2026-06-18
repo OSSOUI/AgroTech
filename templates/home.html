@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}AgroTech — Marketplace de Terrains Agricoles au Maroc{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════  HERO  ══════════════ -->
+<section class="hero-gradient text-white py-24 px-4">
+  <div class="max-w-4xl mx-auto text-center">
+    <span class="inline-block bg-emerald-600/50 text-emerald-200 text-xs font-semibold px-3 py-1 rounded-full mb-5 uppercase tracking-widest">
+      Plateforme Agri-PropTech
+    </span>
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+      Achetez et vendez des terrains agricoles<br>
+      <span class="text-emerald-300">en toute confiance</span>
+    </h1>
+    <p class="text-emerald-100 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+      La première marketplace dédiée aux terrains agricoles marocains. Comparez, filtrez et investissez grâce à des annonces certifiées et des données objectives.
+    </p>
+
+    <!-- Search bar -->
+    <form method="get" action="{% url 'listings:liste' %}" class="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
+      <input
+        type="text" name="q"
+        placeholder="Région, ville, type de culture..."
+        class="flex-1 px-5 py-4 rounded-xl text-gray-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-lg"
+      />
+      <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-xl font-bold text-sm transition shadow-lg whitespace-nowrap">
+        Rechercher
+      </button>
+    </form>
+
+    <!-- Quick filters -->
+    <div class="flex flex-wrap justify-center gap-2 mt-6">
+      {% with regions="marrakech,souss-massa,rabat-sale,casablanca,fes-meknes" %}
+        {% for r in regions.split %}
+          <a href="{% url 'listings:liste' %}?region={{ r }}"
+             class="bg-emerald-800/50 hover:bg-emerald-700 text-emerald-100 text-xs px-3 py-1.5 rounded-full transition">
+            {% if r == "marrakech" %}Marrakech-Safi
+            {% elif r == "souss-massa" %}Souss-Massa
+            {% elif r == "rabat-sale" %}Rabat-Salé
+            {% elif r == "casablanca" %}Casablanca
+            {% elif r == "fes-meknes" %}Fès-Meknès
+            {% endif %}
+          </a>
+        {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════  STATS  ══════════════ -->
+<section class="bg-white border-b border-gray-100">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div>
+        <div class="text-3xl font-extrabold text-emerald-700">{{ stats.total_annonces }}+</div>
+        <div class="text-gray-500 text-sm mt-1">Annonces actives</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-emerald-700">{{ stats.total_vendeurs }}+</div>
+        <div class="text-gray-500 text-sm mt-1">Vendeurs inscrits</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-emerald-700">12</div>
+        <div class="text-gray-500 text-sm mt-1">Régions couvertes</div>
+      </div>
+      <div>
+        <div class="text-3xl font-extrabold text-emerald-700">100%</div>
+        <div class="text-gray-500 text-sm mt-1">Sécurisé</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════  ANNONCES RÉCENTES  ══════════════ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">Annonces récentes</h2>
+      <p class="text-gray-500 text-sm mt-1">Les derniers terrains mis en vente sur la plateforme</p>
+    </div>
+    <a href="{% url 'listings:liste' %}" class="text-emerald-700 hover:text-emerald-800 font-semibold text-sm flex items-center gap-1">
+      Voir tout
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+
+  {% if annonces_recentes %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for annonce in annonces_recentes %}
+        {% include "partials/annonce_card.html" %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+      <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <p class="text-gray-400 font-medium">Aucune annonce pour le moment</p>
+      <a href="{% url 'accounts:inscription' %}" class="mt-4 inline-block text-emerald-700 font-semibold text-sm hover:underline">
+        Soyez le premier à déposer une annonce →
+      </a>
+    </div>
+  {% endif %}
+</section>
+
+<!-- ══════════════  HOW IT WORKS  ══════════════ -->
+<section class="bg-emerald-50 py-16">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold text-center text-gray-900 mb-12">Comment ça marche ?</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="w-14 h-14 bg-emerald-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+        <h3 class="font-semibold text-gray-900 mb-2">Créez votre compte vendeur</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Inscription gratuite en 2 minutes. Renseignez vos coordonnées et commencez à publier.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-14 h-14 bg-emerald-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+        <h3 class="font-semibold text-gray-900 mb-2">Publiez votre terrain</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Ajoutez photos, superficie, prix, type de culture et titre foncier. Votre annonce est en ligne immédiatement.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-14 h-14 bg-emerald-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+        <h3 class="font-semibold text-gray-900 mb-2">Recevez des contacts</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Les investisseurs et acheteurs vous contactent directement. Vous gérez vos annonces depuis votre tableau de bord.</p>
+      </div>
+    </div>
+    <div class="text-center mt-10">
+      <a href="{% url 'accounts:inscription' %}" class="inline-block bg-emerald-700 hover:bg-emerald-800 text-white px-8 py-4 rounded-xl font-bold text-sm transition shadow-md">
+        Déposer une annonce gratuitement
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════  CTA ACHETEUR  ══════════════ -->
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="bg-gradient-to-r from-emerald-700 to-emerald-900 rounded-3xl p-10 text-center text-white shadow-xl">
+    <h2 class="text-2xl font-bold mb-3">Vous cherchez à investir ?</h2>
+    <p class="text-emerald-200 mb-7 max-w-lg mx-auto text-sm leading-relaxed">
+      Parcourez des centaines d'annonces, filtrez par région, surface et type de culture. Trouvez le terrain idéal pour votre projet agricole.
+    </p>
+    <a href="{% url 'listings:liste' %}" class="inline-block bg-white text-emerald-800 hover:bg-emerald-50 px-8 py-4 rounded-xl font-bold text-sm transition shadow">
+      Explorer les terrains disponibles
+    </a>
+  </div>
+</section>
+
+{% endblock %}

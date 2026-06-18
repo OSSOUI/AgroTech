@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        Bonjour, {{ user.first_name }} 👋
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">Gérez vos annonces et suivez leurs performances</p>
+    </div>
+    <a href="{% url 'listings:creer' %}"
+       class="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition shadow-sm flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nouvelle annonce
+    </a>
+  </div>
+
+  <!-- Stats cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-3xl font-extrabold text-gray-900">{{ stats.total }}</div>
+          <div class="text-sm text-gray-500 mt-1">Total annonces</div>
+        </div>
+        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-3xl font-extrabold text-emerald-700">{{ stats.actives }}</div>
+          <div class="text-sm text-gray-500 mt-1">Annonces actives</div>
+        </div>
+        <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-3xl font-extrabold text-amber-600">{{ stats.en_attente }}</div>
+          <div class="text-sm text-gray-500 mt-1">En attente</div>
+        </div>
+        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+          <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listings table -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-900">Mes annonces</h2>
+    </div>
+
+    {% if annonces %}
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+              <th class="text-left px-6 py-3 font-medium">Terrain</th>
+              <th class="text-left px-6 py-3 font-medium hidden sm:table-cell">Localisation</th>
+              <th class="text-left px-6 py-3 font-medium hidden md:table-cell">Surface</th>
+              <th class="text-left px-6 py-3 font-medium">Prix</th>
+              <th class="text-left px-6 py-3 font-medium hidden lg:table-cell">Vues</th>
+              <th class="text-left px-6 py-3 font-medium">Statut</th>
+              <th class="text-right px-6 py-3 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for annonce in annonces %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    {% with photo=annonce.get_photo_principale %}
+                      {% if photo %}
+                        <img src="{{ photo.image.url }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                      {% else %}
+                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/>
+                          </svg>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                    <div>
+                      <a href="{{ annonce.get_absolute_url }}" class="font-medium text-gray-900 text-sm hover:text-emerald-700 line-clamp-1">
+                        {{ annonce.titre }}
+                      </a>
+                      <div class="text-xs text-gray-400 mt-0.5">{{ annonce.date_creation|date:"j M Y" }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 hidden sm:table-cell">
+                  <span class="text-sm text-gray-600">{{ annonce.ville }}</span>
+                </td>
+                <td class="px-6 py-4 hidden md:table-cell">
+                  <span class="text-sm text-gray-600">{{ annonce.surface }} ha</span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="text-sm font-semibold text-emerald-700">{{ annonce.prix|floatformat:0 }} MAD</span>
+                </td>
+                <td class="px-6 py-4 hidden lg:table-cell">
+                  <span class="text-sm text-gray-500">{{ annonce.vues }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full
+                    {% if annonce.statut == 'active' %}badge-active
+                    {% elif annonce.statut == 'en_attente' %}badge-pending
+                    {% else %}badge-disabled{% endif %}">
+                    {{ annonce.get_statut_display }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="{% url 'listings:modifier' annonce.pk %}"
+                       class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition">
+                      Modifier
+                    </a>
+                    <a href="{% url 'listings:supprimer' annonce.pk %}"
+                       class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition">
+                      Suppr.
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-16">
+        <svg class="w-14 h-14 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="text-gray-400 font-medium">Vous n'avez aucune annonce pour le moment</p>
+        <a href="{% url 'listings:creer' %}" class="mt-3 inline-block bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+          Déposer ma première annonce
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Profil link -->
+  <div class="mt-6 text-center">
+    <a href="{% url 'accounts:profil' %}" class="text-sm text-gray-400 hover:text-emerald-700 transition">
+      Modifier mon profil →
+    </a>
+  </div>
+
+</div>
+{% endblock %}

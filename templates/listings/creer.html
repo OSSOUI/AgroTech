@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Déposer une annonce — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Déposer une annonce</h1>
+    <p class="text-gray-500 text-sm mt-1">Remplissez les informations ci-dessous pour publier votre terrain</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <!-- Section 1: Infos générales -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+      <h2 class="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+        <span class="w-6 h-6 bg-emerald-700 text-white rounded-full text-xs flex items-center justify-center font-bold">1</span>
+        Informations générales
+      </h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.titre.label }} *</label>
+          {{ form.titre }}
+          {% if form.titre.errors %}<p class="text-xs text-red-500 mt-1">{{ form.titre.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.description.label }} *</label>
+          {{ form.description }}
+          {% if form.description.errors %}<p class="text-xs text-red-500 mt-1">{{ form.description.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Localisation -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+      <h2 class="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+        <span class="w-6 h-6 bg-emerald-700 text-white rounded-full text-xs flex items-center justify-center font-bold">2</span>
+        Localisation
+      </h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.region.label }} *</label>
+          {{ form.region }}
+          {% if form.region.errors %}<p class="text-xs text-red-500 mt-1">{{ form.region.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.ville.label }} *</label>
+          {{ form.ville }}
+          {% if form.ville.errors %}<p class="text-xs text-red-500 mt-1">{{ form.ville.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.latitude.label }}</label>
+          {{ form.latitude }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.longitude.label }}</label>
+          {{ form.longitude }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Caractéristiques -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-5">
+      <h2 class="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+        <span class="w-6 h-6 bg-emerald-700 text-white rounded-full text-xs flex items-center justify-center font-bold">3</span>
+        Caractéristiques du terrain
+      </h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.surface.label }} *</label>
+          {{ form.surface }}
+          {% if form.surface.errors %}<p class="text-xs text-red-500 mt-1">{{ form.surface.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.prix.label }} *</label>
+          {{ form.prix }}
+          {% if form.prix.errors %}<p class="text-xs text-red-500 mt-1">{{ form.prix.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.type_culture.label }} *</label>
+          {{ form.type_culture }}
+          {% if form.type_culture.errors %}<p class="text-xs text-red-500 mt-1">{{ form.type_culture.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.type_titre_foncier.label }} *</label>
+          {{ form.type_titre_foncier }}
+          {% if form.type_titre_foncier.errors %}<p class="text-xs text-red-500 mt-1">{{ form.type_titre_foncier.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- Checkboxes -->
+      <div class="pt-4 border-t border-gray-100">
+        <p class="text-xs font-semibold text-gray-600 mb-3">Équipements disponibles</p>
+        <div class="flex flex-wrap gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            {{ form.acces_eau }}
+            <span class="text-sm text-gray-700">{{ form.acces_eau.label }}</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            {{ form.acces_route }}
+            <span class="text-sm text-gray-700">{{ form.acces_route.label }}</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            {{ form.electricite }}
+            <span class="text-sm text-gray-700">{{ form.electricite.label }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Photos -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <h2 class="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+        <span class="w-6 h-6 bg-emerald-700 text-white rounded-full text-xs flex items-center justify-center font-bold">4</span>
+        Photos du terrain
+      </h2>
+      <p class="text-xs text-gray-400 mb-4">Ajoutez jusqu'à 8 photos. La première sera la photo principale.</p>
+
+      <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
+        <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-sm text-gray-400 font-medium">Cliquez pour ajouter des photos</span>
+        <span class="text-xs text-gray-300 mt-1">JPG, PNG — Max 8 fichiers</span>
+        <input type="file" name="photos" accept="image/*" multiple class="hidden" id="photo-input" />
+      </label>
+      <div id="photo-preview" class="flex gap-2 mt-3 flex-wrap"></div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex gap-3">
+      <button type="submit"
+              class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md">
+        Publier l'annonce
+      </button>
+      <a href="{% url 'accounts:tableau_de_bord' %}"
+         class="px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition">
+        Annuler
+      </a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const input = document.getElementById('photo-input');
+  const preview = document.getElementById('photo-preview');
+  if (input) {
+    input.addEventListener('change', () => {
+      preview.innerHTML = '';
+      Array.from(input.files).slice(0, 8).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'h-20 w-24 object-cover rounded-lg border border-gray-200';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+</script>
+{% endblock %}
