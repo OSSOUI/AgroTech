@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Mes favoris — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <svg class="w-7 h-7 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        Mes favoris
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {% if favoris %}
+          {{ favoris|length }} terrain{{ favoris|length|pluralize }} sauvegardé{{ favoris|length|pluralize }}
+        {% else %}
+          Aucun terrain sauvegardé pour l'instant
+        {% endif %}
+      </p>
+    </div>
+    <a href="{% url 'listings:liste' %}"
+       class="text-sm text-emerald-700 hover:underline font-medium flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Explorer les terrains
+    </a>
+  </div>
+
+  {% if favoris %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {% for favori in favoris %}
+        {% with annonce=favori.annonce %}
+          {% include "partials/annonce_card.html" %}
+        {% endwith %}
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <!-- État vide -->
+    <div class="flex flex-col items-center justify-center py-24 text-center">
+      <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-6">
+        <svg class="w-12 h-12 text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-800 mb-2">Aucun favori pour l'instant</h2>
+      <p class="text-gray-500 text-sm max-w-sm mb-8">
+        Cliquez sur le ❤️ d'une annonce pour la sauvegarder ici et la retrouver facilement.
+      </p>
+      <a href="{% url 'listings:liste' %}"
+         class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-semibold text-sm transition shadow-sm">
+        Parcourir les terrains
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -9,4 +9,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('compte/', include('accounts.urls', namespace='accounts')),
     path('terrains/', include('listings.urls', namespace='listings')),
+    path('messages/', include('messaging.urls', namespace='messaging')),
+    # allauth — social auth + password reset
+    path('auth/', include('allauth.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

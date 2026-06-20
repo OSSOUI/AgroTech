@@ -1,24 +1,56 @@
 {% with photo=annonce.get_photo_principale %}
-<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 card-hover">
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border {% if annonce.est_booste %}border-amber-300 shadow-amber-100{% else %}border-gray-100{% endif %} card-hover">
+  <!-- Bandeau "En vedette" -->
+  {% if annonce.est_booste %}
+  <div class="bg-gradient-to-r from-amber-500 to-orange-400 text-white text-xs font-bold py-1.5 px-4 flex items-center justify-center gap-1.5">
+    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+    </svg>
+    En vedette
+  </div>
+  {% endif %}
   <!-- Photo -->
-  <a href="{{ annonce.get_absolute_url }}" class="block relative h-52 overflow-hidden bg-emerald-50">
-    {% if photo %}
-      <img src="{{ photo.image.url }}" alt="{{ annonce.titre }}"
-           class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-    {% else %}
-      <div class="w-full h-full flex flex-col items-center justify-center text-emerald-300">
-        <svg class="w-14 h-14 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <span class="text-xs font-medium text-emerald-400">Aucune photo</span>
-      </div>
-    {% endif %}
+  <div class="relative h-52 overflow-hidden bg-emerald-50">
+    <a href="{{ annonce.get_absolute_url }}" class="block w-full h-full">
+      {% if photo %}
+        <img src="{{ photo.image.url }}" alt="{{ annonce.titre }}"
+             class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+      {% else %}
+        <div class="w-full h-full flex flex-col items-center justify-center text-emerald-300">
+          <svg class="w-14 h-14 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-xs font-medium text-emerald-400">Aucune photo</span>
+        </div>
+      {% endif %}
+    </a>
     <!-- Badge type culture -->
-    <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+    <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm pointer-events-none">
       {{ annonce.get_type_culture_display }}
     </span>
-  </a>
+    <!-- Bouton favori -->
+    {% if user.is_authenticated %}
+      {% with is_fav=annonce.pk|stringformat:"s" %}
+      <button type="button"
+              class="favori-btn absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm transition-transform hover:scale-110 focus:outline-none"
+              data-annonce-id="{{ annonce.pk }}"
+              data-url="{% url 'listings:toggle_favori' annonce.pk %}"
+              data-is-favori="{% if annonce.pk in favoris_ids %}true{% else %}false{% endif %}"
+              aria-label="{% if annonce.pk in favoris_ids %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+        <svg class="favori-heart w-5 h-5 transition-colors"
+             viewBox="0 0 24 24"
+             fill="{% if annonce.pk in favoris_ids %}currentColor{% else %}none{% endif %}"
+             stroke="currentColor"
+             stroke-width="2"
+             style="color: {% if annonce.pk in favoris_ids %}#ef4444{% else %}#9ca3af{% endif %}">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </button>
+      {% endwith %}
+    {% endif %}
+  </div>
 
   <!-- Content -->
   <div class="p-5">
@@ -84,6 +116,21 @@
         Voir l'annonce
       </a>
     </div>
+
+    <!-- Comparer -->
+    <button type="button"
+            class="comparer-btn mt-3 pt-3 border-t border-gray-100 w-full flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-emerald-700 transition group"
+            data-annonce-id="{{ annonce.pk }}"
+            data-titre="{{ annonce.titre|truncatechars:40 }}"
+            data-photo="{% if annonce.get_photo_principale %}{{ annonce.get_photo_principale.image.url }}{% endif %}"
+            data-prix="{{ annonce.prix|floatformat:0 }}">
+      <span class="comparer-box w-4 h-4 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 transition group-hover:border-emerald-500">
+        <svg class="comparer-check w-2.5 h-2.5 hidden" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+      </span>
+      <span class="comparer-label">Ajouter à la comparaison</span>
+    </button>
   </div>
 </div>
 {% endwith %}

@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Déposer une annonce — AgroTech{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .leaflet-container img { display:inline!important; max-width:none!important; max-height:none!important; width:auto!important; box-shadow:none!important; border-radius:0!important; }
+  .leaflet-tile-pane img { margin:0!important; padding:0!important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
@@ -50,14 +58,30 @@
           {{ form.ville }}
           {% if form.ville.errors %}<p class="text-xs text-red-500 mt-1">{{ form.ville.errors.0 }}</p>{% endif %}
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.latitude.label }}</label>
-          {{ form.latitude }}
+      </div>
+
+      <!-- Sélecteur de position -->
+      <div class="mt-4">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+          📍 Position exacte sur la carte
+          <span class="font-normal text-gray-400">(optionnel — cliquez pour placer un repère)</span>
+        </label>
+        <div id="picker-map" class="w-full rounded-xl border border-gray-200 overflow-hidden" style="height:280px;"></div>
+
+        <!-- Coordonnées affichées + bouton effacer -->
+        <div id="coords-display" class="hidden mt-2 flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+          <span class="text-xs text-emerald-700 font-medium">
+            📍 <span id="coords-text"></span>
+          </span>
+          <button type="button" onclick="clearPin()"
+                  class="text-xs text-red-400 hover:text-red-600 transition font-medium">
+            Effacer la position
+          </button>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.longitude.label }}</label>
-          {{ form.longitude }}
-        </div>
+
+        <!-- Champs cachés soumis avec le formulaire -->
+        {{ form.latitude.as_hidden }}
+        {{ form.longitude.as_hidden }}
       </div>
     </div>
 
@@ -146,7 +170,64 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // ── Carte sélecteur de position ───────────────────────────
+  (function () {
+    const latInput = document.getElementById('id_latitude');
+    const lngInput = document.getElementById('id_longitude');
+    const display  = document.getElementById('coords-display');
+    const coordsTxt = document.getElementById('coords-text');
+
+    const map = L.map('picker-map').setView([31.7917, -7.0926], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+
+    const pinIcon = L.divIcon({
+      html: '<div style="background:#047857;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>',
+      className: '',
+      iconSize: [22, 22],
+      iconAnchor: [11, 22],
+    });
+
+    let marker = null;
+
+    function placePin(lat, lng) {
+      if (marker) marker.setLatLng([lat, lng]);
+      else marker = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(map);
+
+      marker.on('dragend', function () {
+        const p = marker.getLatLng();
+        setCoords(p.lat, p.lng);
+      });
+
+      setCoords(lat, lng);
+    }
+
+    function setCoords(lat, lng) {
+      latInput.value = lat.toFixed(6);
+      lngInput.value = lng.toFixed(6);
+      coordsTxt.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+      display.classList.remove('hidden');
+    }
+
+    map.on('click', function (e) {
+      placePin(e.latlng.lat, e.latlng.lng);
+    });
+
+    window.clearPin = function () {
+      if (marker) { map.removeLayer(marker); marker = null; }
+      latInput.value = '';
+      lngInput.value = '';
+      display.classList.add('hidden');
+    };
+
+    [100, 400, 900].forEach(ms => setTimeout(() => map.invalidateSize(), ms));
+  })();
+
+  // ── Aperçu photos ─────────────────────────────────────────
   const input = document.getElementById('photo-input');
   const preview = document.getElementById('photo-preview');
   if (input) {

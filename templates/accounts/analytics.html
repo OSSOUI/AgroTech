@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Analytiques — AgroTech{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+        <a href="{% url 'accounts:tableau_de_bord' %}" class="hover:text-emerald-600 transition">Tableau de bord</a>
+        <span>/</span>
+        <span>Analytiques</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">Performance de vos annonces</h1>
+      <p class="text-sm text-gray-400 mt-0.5">Données sur les 14 derniers jours · Hors vos propres visites</p>
+    </div>
+    <a href="{% url 'listings:creer' %}"
+       class="hidden sm:flex bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl font-semibold text-sm transition items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nouvelle annonce
+    </a>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </div>
+        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">7 jours</span>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ totaux.vues_7j }}</div>
+      <div class="text-xs text-gray-400 mt-1">Vues cette semaine</div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Total</span>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ totaux.total_vues }}</div>
+      <div class="text-xs text-gray-400 mt-1">Vues toutes annonces</div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+        <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">Messages</span>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ totaux.messages }}</div>
+      <div class="text-xs text-gray-400 mt-1">Messages reçus</div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+        </div>
+        <span class="text-xs text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-medium">Favoris</span>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ totaux.favoris }}</div>
+      <div class="text-xs text-gray-400 mt-1">Ajouts en favoris</div>
+    </div>
+
+  </div>
+
+  <!-- Chart -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="font-semibold text-gray-900">Vues quotidiennes</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Toutes vos annonces confondues · 14 derniers jours</p>
+      </div>
+      {% if totaux.vues_7j == 0 and totaux.total_vues == 0 %}
+        <span class="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">En attente de données</span>
+      {% endif %}
+    </div>
+    <div class="relative" style="height: 240px;">
+      <canvas id="views-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Table par annonce -->
+  {% if annonce_stats %}
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-900">Performance par annonce</h2>
+      <p class="text-xs text-gray-400 mt-0.5">Classées par vues sur 7 jours</p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-gray-50 text-xs text-gray-400 uppercase tracking-wider">
+            <th class="text-left px-6 py-3 font-medium">Annonce</th>
+            <th class="text-center px-4 py-3 font-medium">
+              <span class="flex items-center justify-center gap-1">
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Vues 7j
+              </span>
+            </th>
+            <th class="text-center px-4 py-3 font-medium hidden md:table-cell">Total vues</th>
+            <th class="text-center px-4 py-3 font-medium">
+              <span class="flex items-center justify-center gap-1">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                Messages
+              </span>
+            </th>
+            <th class="text-center px-4 py-3 font-medium hidden sm:table-cell">
+              <span class="flex items-center justify-center gap-1">
+                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+                Favoris
+              </span>
+            </th>
+            <th class="text-left px-4 py-3 font-medium">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for stat in annonce_stats %}
+          <tr class="hover:bg-gray-50 transition {% if forloop.first and stat.vues_7j > 0 %}bg-indigo-50/30{% endif %}">
+
+            <!-- Annonce info -->
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                {% with photo=stat.annonce.get_photo_principale %}
+                  {% if photo %}
+                    <img src="{{ photo.image.url }}" class="w-12 h-10 rounded-lg object-cover flex-shrink-0" />
+                  {% else %}
+                    <div class="w-12 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">🌿</div>
+                  {% endif %}
+                {% endwith %}
+                <div class="min-w-0">
+                  <a href="{{ stat.annonce.get_absolute_url }}"
+                     class="font-medium text-gray-900 text-sm hover:text-emerald-700 line-clamp-1 transition">
+                    {{ stat.annonce.titre }}
+                  </a>
+                  <div class="text-xs text-gray-400 mt-0.5">{{ stat.annonce.ville }} · {{ stat.annonce.surface }} ha</div>
+                </div>
+                {% if forloop.first and stat.vues_7j > 0 %}
+                  <span class="hidden lg:inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full shrink-0">
+                    ↑ Top
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Vues 7j -->
+            <td class="px-4 py-4 text-center">
+              <span class="text-lg font-bold {% if stat.vues_7j > 0 %}text-indigo-600{% else %}text-gray-300{% endif %}">
+                {{ stat.vues_7j }}
+              </span>
+            </td>
+
+            <!-- Total vues -->
+            <td class="px-4 py-4 text-center hidden md:table-cell">
+              <span class="text-sm font-medium text-gray-500">{{ stat.total_vues }}</span>
+            </td>
+
+            <!-- Messages -->
+            <td class="px-4 py-4 text-center">
+              <span class="text-lg font-bold {% if stat.messages > 0 %}text-emerald-600{% else %}text-gray-300{% endif %}">
+                {{ stat.messages }}
+              </span>
+            </td>
+
+            <!-- Favoris -->
+            <td class="px-4 py-4 text-center hidden sm:table-cell">
+              <span class="text-lg font-bold {% if stat.favoris > 0 %}text-rose-500{% else %}text-gray-300{% endif %}">
+                {{ stat.favoris }}
+              </span>
+            </td>
+
+            <!-- Statut -->
+            <td class="px-4 py-4">
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full
+                {% if stat.annonce.statut == 'active' %}badge-active
+                {% elif stat.annonce.statut == 'en_attente' %}badge-pending
+                {% else %}badge-disabled{% endif %}">
+                {{ stat.annonce.get_statut_display }}
+              </span>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty hint when all zeros -->
+    {% if totaux.vues_7j == 0 %}
+    <div class="px-6 py-4 border-t border-gray-50 bg-gray-50 text-xs text-gray-400 flex items-center gap-2">
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Les vues s'accumulent dès que des acheteurs consultent vos annonces. Les données apparaissent en temps réel.
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+    <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <p class="text-gray-500 font-medium mb-1">Aucune annonce à analyser</p>
+    <p class="text-sm text-gray-400 mb-4">Publiez votre première annonce pour voir ses statistiques ici.</p>
+    <a href="{% url 'listings:creer' %}"
+       class="inline-block bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+      Déposer une annonce
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('views-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const labels = {{ chart_labels|safe }};
+    const data   = {{ chart_data|safe }};
+    const maxVal = Math.max(...data, 1);
+
+    const ctx = canvas.getContext('2d');
+
+    // Gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.18)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Vues',
+          data,
+          fill: true,
+          backgroundColor: gradient,
+          borderColor: '#6366f1',
+          borderWidth: 2,
+          pointBackgroundColor: '#6366f1',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: data.map((v, i) => {
+            // Only show point if it has data or is last
+            return v > 0 || i === data.length - 1 ? 4 : 2;
+          }),
+          pointHoverRadius: 6,
+          tension: 0.4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1f2937',
+            titleColor: '#9ca3af',
+            bodyColor: '#f9fafb',
+            padding: 10,
+            cornerRadius: 10,
+            callbacks: {
+              label: (ctx) => ` ${ctx.parsed.y} vue${ctx.parsed.y !== 1 ? 's' : ''}`,
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: maxVal + 1,
+            ticks: {
+              stepSize: Math.ceil(maxVal / 5) || 1,
+              color: '#9ca3af',
+              font: { size: 11 },
+              padding: 8,
+            },
+            grid: { color: '#f3f4f6', drawBorder: false },
+            border: { display: false },
+          },
+          x: {
+            ticks: {
+              color: '#9ca3af',
+              font: { size: 11 },
+              maxRotation: 0,
+              padding: 6,
+            },
+            grid: { display: false },
+            border: { display: false },
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

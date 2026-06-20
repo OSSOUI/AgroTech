@@ -3,10 +3,8 @@
 {% block description %}{{ annonce.description|truncatechars:160 }}{% endblock %}
 
 {% block extra_head %}
-{% if annonce.latitude and annonce.longitude %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  /* Fix conflit Tailwind CDN + Leaflet */
   .leaflet-container img {
     display: inline !important;
     max-width: none !important;
@@ -19,15 +17,12 @@
     margin: 0 !important;
     padding: 0 !important;
   }
-  .leaflet-container {
-    z-index: 1;
-  }
+  .leaflet-container { z-index: 1; }
   .leaflet-popup-content-wrapper {
     border-radius: 12px !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
   }
 </style>
-{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -80,8 +75,8 @@
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div class="flex items-start justify-between mb-4">
           <h1 class="text-2xl font-bold text-gray-900 leading-tight">{{ annonce.titre }}</h1>
-          {% if user == annonce.vendeur %}
-            <div class="flex gap-2 ml-4">
+          <div class="flex gap-2 ml-4 shrink-0">
+            {% if user == annonce.vendeur %}
               <a href="{% url 'listings:modifier' annonce.pk %}"
                  class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition">
                 Modifier
@@ -90,8 +85,18 @@
                  class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition">
                 Supprimer
               </a>
-            </div>
-          {% endif %}
+            {% endif %}
+            <!-- Bouton partager (visible sur tous) -->
+            <button id="title-share-btn"
+                    onclick="handleShare()"
+                    class="text-xs bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 text-gray-600 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+              </svg>
+              Partager
+            </button>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 text-gray-500 text-sm mb-5">
@@ -155,39 +160,34 @@
       </div>
 
       <!-- Localisation -->
-      {% if annonce.latitude and annonce.longitude %}
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <h2 class="font-semibold text-gray-900">Localisation</h2>
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <h2 class="font-semibold text-gray-900">Localisation</h2>
+          </div>
+          {% if not annonce.latitude %}
+          <span class="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full font-medium">
+            Position approximative
+          </span>
+          {% endif %}
         </div>
         <div id="detail-map" style="height:320px;"></div>
-        <div class="px-6 py-3 bg-gray-50 text-xs text-gray-400 flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="px-6 py-3 bg-gray-50 text-xs text-gray-400 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          La localisation est approximative. Contactez le vendeur pour une visite.
+          {% if annonce.latitude %}
+            Localisation précise fournie par le vendeur. Contactez-le pour convenir d'une visite.
+          {% else %}
+            {{ annonce.ville }}, {{ annonce.get_region_display }} — coordonnées GPS non renseignées par le vendeur.
+          {% endif %}
         </div>
       </div>
-      {% else %}
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          </svg>
-          <h2 class="font-semibold text-gray-900">Localisation</h2>
-        </div>
-        <p class="text-sm text-gray-500">
-          {{ annonce.ville }}, {{ annonce.get_region_display }}
-        </p>
-        <p class="text-xs text-gray-400 mt-1">Coordonnées GPS non renseignées par le vendeur.</p>
-      </div>
-      {% endif %}
 
     </div>
 
@@ -196,8 +196,30 @@
 
       <!-- Prix -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div class="text-3xl font-extrabold text-emerald-700 mb-1">
-          {{ annonce.prix|floatformat:0 }} <span class="text-lg">MAD</span>
+        <div class="flex items-start justify-between mb-1">
+          <div class="text-3xl font-extrabold text-emerald-700">
+            {{ annonce.prix|floatformat:0 }} <span class="text-lg">MAD</span>
+          </div>
+          {% if user.is_authenticated and user != annonce.vendeur %}
+            <button type="button"
+                    id="detail-favori-btn"
+                    class="favori-btn flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-xl border transition ml-3
+                           {% if is_favori %}border-red-200 bg-red-50 text-red-500{% else %}border-gray-200 text-gray-400 hover:border-red-200 hover:bg-red-50 hover:text-red-400{% endif %}"
+                    data-annonce-id="{{ annonce.pk }}"
+                    data-url="{% url 'listings:toggle_favori' annonce.pk %}"
+                    data-is-favori="{% if is_favori %}true{% else %}false{% endif %}"
+                    aria-label="{% if is_favori %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+              <svg class="favori-heart w-5 h-5"
+                   viewBox="0 0 24 24"
+                   fill="{% if is_favori %}currentColor{% else %}none{% endif %}"
+                   stroke="currentColor"
+                   stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+              <span class="favori-label text-xs">{% if is_favori %}Sauvegardé{% else %}Sauvegarder{% endif %}</span>
+            </button>
+          {% endif %}
         </div>
         {% if annonce.prix_par_hectare %}
           <div class="text-sm text-gray-400 mb-5">{{ annonce.prix_par_hectare|floatformat:0 }} MAD / hectare</div>
@@ -223,10 +245,25 @@
           {% endif %}
         {% endwith %}
 
-        {% if not user.is_authenticated %}
-          <p class="text-center text-xs text-gray-400 mt-2">
-            <a href="{% url 'accounts:connexion' %}" class="text-emerald-600 hover:underline">Connectez-vous</a> pour accéder à toutes les annonces
-          </p>
+        <!-- Bouton messagerie interne -->
+        {% if user.is_authenticated and user != annonce.vendeur %}
+          <button onclick="document.getElementById('modal-message').classList.remove('hidden')"
+                  class="flex items-center justify-center gap-2 w-full border-2 border-emerald-700 text-emerald-700 hover:bg-emerald-50 py-3 rounded-xl font-semibold text-sm transition mt-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+            Envoyer un message
+          </button>
+        {% elif not user.is_authenticated %}
+          <a href="{% url 'accounts:connexion' %}?next={{ request.path }}"
+             class="flex items-center justify-center gap-2 w-full border-2 border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700 py-3 rounded-xl font-semibold text-sm transition mt-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+            Connectez-vous pour écrire
+          </a>
         {% endif %}
       </div>
 
@@ -234,13 +271,36 @@
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 class="font-semibold text-gray-900 mb-4 text-sm">Publié par</h3>
         <div class="flex items-center gap-3">
-          <div class="w-11 h-11 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
-            {{ annonce.vendeur.first_name|first|upper }}{{ annonce.vendeur.last_name|first|upper }}
-          </div>
+          {% if annonce.vendeur.photo_profil %}
+            <img src="{{ annonce.vendeur.photo_profil.url }}"
+                 class="w-11 h-11 rounded-full object-cover shrink-0" />
+          {% else %}
+            <div class="w-11 h-11 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold shrink-0">
+              {{ annonce.vendeur.first_name|first|upper }}{{ annonce.vendeur.last_name|first|upper }}
+            </div>
+          {% endif %}
           <div>
             <div class="font-semibold text-gray-900 text-sm">{{ annonce.vendeur.get_full_name }}</div>
             {% if annonce.vendeur.ville %}
               <div class="text-xs text-gray-400">{{ annonce.vendeur.ville }}</div>
+            {% endif %}
+            {% if note_vendeur %}
+              <div class="flex items-center gap-1 mt-1">
+                <div class="flex gap-0.5">
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= note_vendeur %}
+                      <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    {% else %}
+                      <svg class="w-3 h-3 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                <span class="text-xs text-gray-400">{{ note_vendeur }} ({{ nb_avis_vendeur }} avis)</span>
+              </div>
             {% endif %}
           </div>
         </div>
@@ -253,6 +313,183 @@
             <span class="font-semibold">{{ annonce.vendeur.telephone }}</span>
           </div>
         {% endif %}
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <a href="{% url 'accounts:profil_vendeur' annonce.vendeur.pk %}"
+             class="text-xs text-emerald-600 hover:text-emerald-800 font-medium transition flex items-center gap-1">
+            Voir le profil du vendeur
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Simulateur de financement -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <button type="button" onclick="toggleSimu()"
+                class="w-full flex items-center justify-between group">
+          <h3 class="font-semibold text-gray-900 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Simulateur de financement
+          </h3>
+          <svg id="simu-chevron"
+               class="w-4 h-4 text-gray-400 transition-transform duration-200"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <div id="simu-body" class="mt-5 space-y-4 hidden">
+
+          <!-- Prix du bien -->
+          <div class="bg-gray-50 rounded-xl px-4 py-3 flex items-center justify-between">
+            <span class="text-xs text-gray-400 font-medium">Prix du bien</span>
+            <span class="text-sm font-extrabold text-gray-900">{{ annonce.prix|floatformat:0 }} MAD</span>
+          </div>
+
+          <!-- Apport personnel -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Apport personnel</label>
+              <span id="apport-pct" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">20%</span>
+            </div>
+            <input type="range" id="apport-range"
+                   min="0" max="80" step="5" value="20"
+                   class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-emerald-600">
+            <div class="flex justify-between text-xs text-gray-400 mt-1.5">
+              <span id="apport-montant" class="font-medium">—</span>
+              <span id="capital-label" class="font-medium text-gray-500">Emprunt : —</span>
+            </div>
+          </div>
+
+          <!-- Taux d'intérêt -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Taux d'intérêt</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="taux-input"
+                       value="5.50" min="1" max="15" step="0.25"
+                       class="w-16 text-xs text-center border border-gray-200 rounded-lg px-1.5 py-1 font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                <span class="text-xs text-gray-400">% / an</span>
+              </div>
+            </div>
+            <div class="flex gap-1.5 flex-wrap">
+              <button type="button" onclick="setTaux(4.75)"
+                      class="taux-preset text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-700 transition">
+                CAM 4.75%
+              </button>
+              <button type="button" onclick="setTaux(5.50)"
+                      class="taux-preset text-xs px-2.5 py-1 rounded-full border border-emerald-300 text-emerald-700 bg-emerald-50 font-medium">
+                Moy. 5.5%
+              </button>
+              <button type="button" onclick="setTaux(6.25)"
+                      class="taux-preset text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-700 transition">
+                Banque 6.25%
+              </button>
+            </div>
+          </div>
+
+          <!-- Durée -->
+          <div>
+            <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Durée du prêt</label>
+            <div class="flex gap-1.5 flex-wrap">
+              <button type="button" class="duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition" data-duree="7"  onclick="setDuree(7)">7 ans</button>
+              <button type="button" class="duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition" data-duree="10" onclick="setDuree(10)">10 ans</button>
+              <button type="button" class="duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition" data-duree="15" onclick="setDuree(15)">15 ans</button>
+              <button type="button" class="duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition" data-duree="20" onclick="setDuree(20)">20 ans</button>
+              <button type="button" class="duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition" data-duree="25" onclick="setDuree(25)">25 ans</button>
+            </div>
+          </div>
+
+          <!-- Résultat mensualité -->
+          <div class="bg-gradient-to-br from-emerald-700 to-emerald-600 rounded-2xl p-5 text-white">
+            <div class="text-xs text-emerald-200 font-medium mb-1">Mensualité estimée</div>
+            <div id="mensualite" class="text-4xl font-extrabold tracking-tight">— MAD</div>
+            <div class="text-xs text-emerald-300 mt-1">
+              par mois pendant <span id="duree-label">15 ans</span>
+            </div>
+          </div>
+
+          <!-- Détails -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-0.5">Capital emprunté</div>
+              <div id="capital-emprunte" class="text-sm font-bold text-gray-800">—</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-0.5">Total remboursé</div>
+              <div id="total-rembourse" class="text-sm font-bold text-gray-800">—</div>
+            </div>
+            <div class="col-span-2 bg-orange-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-orange-500 mb-0.5">Coût total du crédit</div>
+              <div id="cout-credit" class="text-sm font-bold text-orange-600">—</div>
+            </div>
+          </div>
+
+          <!-- Disclaimer -->
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Simulation indicative basée sur un prêt amortissable classique. Consultez
+            <span class="font-medium">Crédit Agricole du Maroc</span> ou votre banque
+            pour une offre personnalisée.
+          </p>
+        </div>
+      </div>
+
+      <!-- Partager -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Partager cette annonce
+        </h3>
+
+        <!-- WhatsApp share -->
+        <a href="{{ share_wa_url }}"
+           target="_blank" rel="noopener"
+           class="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl font-semibold text-sm transition mb-2">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.121 1.533 5.849L.057 23.552a.75.75 0 00.906.919l5.849-1.476A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.964-1.359l-.355-.212-3.683.929.944-3.585-.232-.368A9.722 9.722 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+          </svg>
+          Partager sur WhatsApp
+        </a>
+
+        <!-- Copier le lien + Native share -->
+        <div class="flex gap-2">
+          <button id="copy-link-btn"
+                  onclick="copyLink()"
+                  class="flex-1 flex items-center justify-center gap-2 border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 text-gray-600 py-2.5 rounded-xl font-medium text-sm transition">
+            <svg id="copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span id="copy-label">Copier le lien</span>
+          </button>
+
+          <button id="native-share-btn"
+                  onclick="nativeShare()"
+                  class="hidden flex-1 flex items-center justify-center gap-2 border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 text-gray-600 py-2.5 rounded-xl font-medium text-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            Autres
+          </button>
+        </div>
+
+        <!-- URL affichée -->
+        <div class="mt-3 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 cursor-pointer group"
+             onclick="copyLink()">
+          <svg class="w-3.5 h-3.5 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+          </svg>
+          <span class="text-xs text-gray-400 truncate group-hover:text-emerald-600 transition">{{ share_url }}</span>
+        </div>
       </div>
 
       <!-- Meta -->
@@ -277,70 +514,267 @@
   {% endif %}
 
 </div>
+
+<!-- Modal envoyer un message -->
+{% if user.is_authenticated and user != annonce.vendeur %}
+<div id="modal-message" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('modal-message').classList.add('hidden')"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-gray-900">Envoyer un message au vendeur</h3>
+      <button onclick="document.getElementById('modal-message').classList.add('hidden')"
+              class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="bg-emerald-50 rounded-xl p-3 mb-4">
+      <p class="text-xs text-emerald-700 font-medium truncate">📍 {{ annonce.titre }}</p>
+      <p class="text-xs text-emerald-600 mt-0.5">{{ annonce.ville }} · {{ annonce.surface }} ha · {{ annonce.prix|floatformat:0 }} MAD</p>
+    </div>
+    <form method="post" action="{% url 'messaging:demarrer' annonce.pk %}">
+      {% csrf_token %}
+      <textarea name="contenu" rows="4" required
+                placeholder="Bonjour, je suis intéressé par votre terrain. Pouvez-vous me donner plus d'informations ?"
+                class="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 placeholder-gray-400"></textarea>
+      <button type="submit"
+              class="mt-4 w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+        Envoyer le message
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
-{% if annonce.latitude and annonce.longitude %}
+<script>
+  // ─── Simulateur de financement ───────────────────────────────────
+  (function () {
+    const PRIX = parseFloat('{{ annonce.prix }}') || 0;
+    let simuDuree = 15;
+
+    const apportRange  = document.getElementById('apport-range');
+    const tauxInput    = document.getElementById('taux-input');
+    const elApportPct  = document.getElementById('apport-pct');
+    const elApportMnt  = document.getElementById('apport-montant');
+    const elCapLbl     = document.getElementById('capital-label');
+    const elMensualite = document.getElementById('mensualite');
+    const elDureeLbl   = document.getElementById('duree-label');
+    const elCapEmp     = document.getElementById('capital-emprunte');
+    const elTotal      = document.getElementById('total-rembourse');
+    const elCout       = document.getElementById('cout-credit');
+
+    function fmt(n) {
+      return new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 0 }).format(Math.round(n)) + ' MAD';
+    }
+
+    function mensualite(capital, tauxAnnuel, mois) {
+      if (capital <= 0) return 0;
+      if (tauxAnnuel === 0) return capital / mois;
+      const r = tauxAnnuel / 100 / 12;
+      return capital * r * Math.pow(1 + r, mois) / (Math.pow(1 + r, mois) - 1);
+    }
+
+    function update() {
+      const pct    = parseInt(apportRange.value);
+      const apport = PRIX * pct / 100;
+      const capital = PRIX - apport;
+      const taux   = parseFloat(tauxInput.value) || 5.5;
+      const mois   = simuDuree * 12;
+
+      elApportPct.textContent  = pct + '%';
+      elApportMnt.textContent  = fmt(apport);
+      elCapLbl.textContent     = 'Emprunt : ' + fmt(capital);
+
+      if (capital <= 0) {
+        elMensualite.textContent = '0 MAD';
+        elCapEmp.textContent     = fmt(0);
+        elTotal.textContent      = fmt(PRIX);
+        elCout.textContent       = '0 MAD';
+        return;
+      }
+
+      const m      = mensualite(capital, taux, mois);
+      const total  = m * mois;
+      const cout   = total - capital;
+
+      elMensualite.textContent = fmt(m);
+      elDureeLbl.textContent   = simuDuree + ' an' + (simuDuree > 1 ? 's' : '');
+      elCapEmp.textContent     = fmt(capital);
+      elTotal.textContent      = fmt(total);
+      elCout.textContent       = '+' + fmt(cout);
+    }
+
+    window.setDuree = function (ans) {
+      simuDuree = ans;
+      document.querySelectorAll('.duree-btn').forEach(b => {
+        const active = parseInt(b.dataset.duree) === ans;
+        b.className = 'duree-btn text-xs px-3 py-1.5 rounded-lg font-semibold transition ' +
+          (active ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-700');
+      });
+      update();
+    };
+
+    window.setTaux = function (t) {
+      tauxInput.value = t.toFixed(2);
+      document.querySelectorAll('.taux-preset').forEach(b => {
+        const active = parseFloat(b.textContent) === t;
+        b.className = 'taux-preset text-xs px-2.5 py-1 rounded-full border transition ' +
+          (active ? 'border-emerald-300 text-emerald-700 bg-emerald-50 font-medium'
+                  : 'border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-700');
+      });
+      update();
+    };
+
+    window.toggleSimu = function () {
+      const body    = document.getElementById('simu-body');
+      const chevron = document.getElementById('simu-chevron');
+      const hidden  = body.classList.toggle('hidden');
+      chevron.style.transform = hidden ? '' : 'rotate(180deg)';
+    };
+
+    if (apportRange) {
+      apportRange.addEventListener('input', update);
+      tauxInput.addEventListener('input', update);
+      setDuree(15);  // init avec 15 ans sélectionné
+    }
+  })();
+
+  // ─── Partage ─────────────────────────────────────────────────────
+  const SHARE_URL   = '{{ share_url|escapejs }}';
+  const SHARE_TITLE = '{{ annonce.titre|escapejs }}';
+  const SHARE_TEXT  = '🌾 {{ annonce.titre|escapejs }} — {{ annonce.surface }} ha à {{ annonce.ville|escapejs }} — {{ annonce.prix|floatformat:0 }} MAD';
+
+  // Affiche le bouton natif si l'API est disponible (mobile principalement)
+  if (navigator.share) {
+    document.getElementById('native-share-btn')?.classList.remove('hidden');
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+    } catch(e) {
+      const el = document.createElement('textarea');
+      el.value = SHARE_URL;
+      el.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(el);
+      el.focus(); el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    animateCopyBtn();
+    showShareToast('Lien copié dans le presse-papiers');
+  }
+
+  function animateCopyBtn() {
+    const btn   = document.getElementById('copy-link-btn');
+    const icon  = document.getElementById('copy-icon');
+    const label = document.getElementById('copy-label');
+    if (!btn) return;
+
+    btn.classList.add('border-emerald-400', 'bg-emerald-50', 'text-emerald-700');
+    if (label) label.textContent = 'Copié !';
+    if (icon) icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>`;
+
+    setTimeout(() => {
+      btn.classList.remove('border-emerald-400', 'bg-emerald-50', 'text-emerald-700');
+      if (label) label.textContent = 'Copier le lien';
+      if (icon) icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>`;
+    }, 2500);
+  }
+
+  async function nativeShare() {
+    if (!navigator.share) return;
+    try {
+      await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url: SHARE_URL });
+    } catch(e) {}
+  }
+
+  // Bouton "Partager" dans le titre : natif si dispo, sinon copie
+  async function handleShare() {
+    if (navigator.share) {
+      await nativeShare();
+    } else {
+      copyLink();
+    }
+  }
+
+  function showShareToast(msg) {
+    const old = document.getElementById('share-toast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'share-toast';
+    t.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-5 py-2.5 rounded-xl z-50 shadow-xl flex items-center gap-2';
+    t.innerHTML = `
+      <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+</script>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const lat = {{ annonce.latitude }};
-  const lng = {{ annonce.longitude }};
+  window.addEventListener('load', function () {
+    const mapEl = document.getElementById('detail-map');
+    if (!mapEl || typeof L === 'undefined') return;
 
-  const map = L.map('detail-map').setView([lat, lng], 13);
+    const hasCoords = {% if annonce.latitude and annonce.longitude %}true{% else %}false{% endif %};
+    const REGION_CENTERS = {
+      'tanger-tetouan': [35.7595, -5.8340],
+      'oriental':       [34.6814, -1.9086],
+      'fes-meknes':     [33.9716, -5.0078],
+      'rabat-sale':     [34.0209, -6.8416],
+      'beni-mellal':    [32.3372, -6.3498],
+      'casablanca':     [33.5731, -7.5898],
+      'marrakech':      [31.6295, -7.9811],
+      'draa-tafilalet': [31.9314, -4.4244],
+      'souss-massa':    [30.4278, -9.5981],
+      'guelmim':        [28.9870, -10.0574],
+      'laayoune':       [27.1418, -13.1875],
+      'dakhla':         [23.6847, -15.9571],
+    };
+    const regionCoords = REGION_CENTERS['{{ annonce.region }}'] || [31.7917, -7.0926];
+    const lat  = hasCoords ? {{ annonce.latitude|default:"31.7917" }}  : regionCoords[0];
+    const lng  = hasCoords ? {{ annonce.longitude|default:"-7.0926" }} : regionCoords[1];
+    const zoom = hasCoords ? 13 : 9;
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18,
-  }).addTo(map);
+    const map = L.map('detail-map', { zoomControl: true }).setView([lat, lng], zoom);
 
-  const iconHtml = `
-    <div style="
-      background:#047857; color:white; border-radius:50% 50% 50% 0;
-      width:40px; height:40px; transform:rotate(-45deg);
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid white;
-    ">
-      <span style="transform:rotate(45deg); font-size:16px;">🌿</span>
-    </div>`;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
 
-  const icon = L.divIcon({
-    html: iconHtml,
-    className: '',
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -42],
-  });
+    if (hasCoords) {
+      const iconHtml = `
+        <div style="background:#047857;color:white;border-radius:50% 50% 50% 0;
+          width:40px;height:40px;transform:rotate(-45deg);
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 3px 10px rgba(0,0,0,.3);border:2px solid white;">
+          <span style="transform:rotate(45deg);font-size:16px;">🌿</span>
+        </div>`;
+      const icon = L.divIcon({ html: iconHtml, className: '', iconSize: [40,40], iconAnchor: [20,40], popupAnchor: [0,-42] });
 
-  L.marker([lat, lng], { icon })
-    .addTo(map)
-    .bindPopup(`<strong style="font-size:13px;">{{ annonce.titre|escapejs }}</strong><br>
-                <span style="color:#6b7280;font-size:11px;">{{ annonce.ville|escapejs }}</span>`)
-    .openPopup();
+      L.marker([lat, lng], { icon })
+        .addTo(map)
+        .bindPopup(`<strong style="font-size:13px;">{{ annonce.titre|escapejs }}</strong><br>
+                    <span style="color:#6b7280;font-size:11px;">{{ annonce.ville|escapejs }}</span>`)
+        .openPopup();
 
-  // Cercle de zone approximative
-  L.circle([lat, lng], {
-    radius: 800,
-    color: '#047857',
-    fillColor: '#047857',
-    fillOpacity: 0.08,
-    weight: 1.5,
-    dashArray: '5, 5',
-  }).addTo(map);
-
-  // Ré-applique le fix CSS après Tailwind CDN et force un recalcul
-  setTimeout(() => {
-    const fix = document.getElementById('leaflet-tw-fix');
-    if (!fix) {
-      const s = document.createElement('style');
-      s.id = 'leaflet-tw-fix';
-      s.textContent = `
-        #detail-map .leaflet-tile { max-width:none!important; width:256px!important; height:256px!important; }
-        #detail-map img { display:inline!important; max-width:none!important; }
-      `;
-      document.head.appendChild(s);
+      L.circle([lat, lng], { radius: 800, color: '#047857', fillColor: '#047857', fillOpacity: 0.08, weight: 1.5, dashArray: '5,5' }).addTo(map);
     }
-    map.invalidateSize();
-  }, 300);
+
+    /* invalidateSize à plusieurs reprises pour garantir le rendu correct */
+    [100, 400, 900].forEach(ms => setTimeout(() => map.invalidateSize(), ms));
+  });
 </script>
-{% endif %}
 {% endblock %}

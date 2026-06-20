@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Boost activé — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 sm:px-6 py-16 text-center">
+
+  <!-- Icône succès -->
+  <div class="relative inline-flex mb-8">
+    <div class="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center">
+      <svg class="w-12 h-12 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+      </svg>
+    </div>
+    <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+  </div>
+
+  <h1 class="text-2xl font-extrabold text-gray-900 mb-2">Votre annonce est en vedette !</h1>
+  <p class="text-gray-500 text-sm mb-8">Elle apparaît maintenant en tête des résultats de recherche sur AgroTech.</p>
+
+  <!-- Récapitulatif boost -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8 text-left space-y-4">
+    <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+      <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-900 text-sm">{{ boost.annonce.titre }}</div>
+        <div class="text-xs text-gray-400">{{ boost.annonce.ville }} · {{ boost.annonce.surface }} ha</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <div class="text-xs text-gray-400 mb-0.5">Forfait</div>
+        <div class="font-semibold text-gray-900">{{ boost.duree_jours }} jours</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400 mb-0.5">Montant</div>
+        <div class="font-semibold text-gray-900">{{ boost.prix_paye }} MAD</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400 mb-0.5">Début</div>
+        <div class="font-semibold text-gray-900">{{ boost.date_debut|date:"j F Y" }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400 mb-0.5">Fin</div>
+        <div class="font-semibold text-gray-900">{{ boost.date_fin|date:"j F Y" }}</div>
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-gray-100">
+      <div class="bg-amber-50 rounded-xl p-3 flex items-center gap-2 text-xs text-amber-700 font-medium">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Votre boost expire le {{ boost.date_fin|date:"j F Y à H:i" }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex flex-col sm:flex-row gap-3">
+    <a href="{{ boost.annonce.get_absolute_url }}"
+       class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
+      Voir mon annonce
+    </a>
+    <a href="{% url 'accounts:tableau_de_bord' %}"
+       class="flex-1 border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-3 rounded-xl text-sm transition text-center">
+      Tableau de bord
+    </a>
+  </div>
+
+</div>
+{% endblock %}

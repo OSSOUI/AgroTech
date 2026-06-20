@@ -1,4 +1,6 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
 from django.db import models
 
 
@@ -35,7 +37,6 @@ class User(AbstractUser):
 
     @property
     def whatsapp_number(self):
-        """Retourne le numéro au format international sans + ni espaces (ex: 212661234567)."""
         if not self.telephone:
             return None
         digits = ''.join(filter(str.isdigit, self.telephone))
@@ -46,3 +47,37 @@ class User(AbstractUser):
         elif not digits.startswith('212') and len(digits) == 9:
             digits = '212' + digits
         return digits if len(digits) >= 10 else None
+
+    @property
+    def note_moyenne(self):
+        from django.db.models import Avg
+        result = self.avis_recus.aggregate(avg=Avg('note'))
+        avg = result['avg']
+        return round(avg, 1) if avg is not None else None
+
+    @property
+    def nb_avis(self):
+        return self.avis_recus.count()
+
+
+class Avis(models.Model):
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='avis_donnes'
+    )
+    vendeur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='avis_recus'
+    )
+    note = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    commentaire = models.TextField(max_length=1000, blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('auteur', 'vendeur')
+        ordering = ['-date_creation']
+        verbose_name = 'Avis'
+        verbose_name_plural = 'Avis'
+
+    def __str__(self):
+        return f'{self.auteur.get_full_name()} → {self.vendeur.get_full_name()} : {self.note}/5'

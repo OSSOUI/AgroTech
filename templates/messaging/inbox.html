@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Mes messages — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Mes messages</h1>
+      <p class="text-sm text-gray-400 mt-1">Toutes vos conversations avec vendeurs et acheteurs</p>
+    </div>
+    {% if messages_non_lus %}
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-800">
+        {{ messages_non_lus }} non lu{{ messages_non_lus|pluralize }}
+      </span>
+    {% endif %}
+  </div>
+
+  {% if convs_data %}
+    <div class="space-y-3">
+      {% for item in convs_data %}
+        {% with conv=item.conv non_lus=item.non_lus dernier=conv.dernier_message %}
+        <a href="{{ conv.get_absolute_url }}"
+           class="flex items-start gap-4 bg-white rounded-2xl border {% if non_lus %}border-emerald-200 shadow-md{% else %}border-gray-100 shadow-sm{% endif %} p-5 hover:border-emerald-300 transition group">
+
+          <!-- Photo terrain -->
+          {% with photo=conv.annonce.photos.first %}
+          <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+            {% if photo %}
+              <img src="{{ photo.image.url }}" alt="" class="w-full h-full object-cover">
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-2xl">🌿</div>
+            {% endif %}
+          </div>
+          {% endwith %}
+
+          <!-- Contenu -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="font-semibold text-gray-900 text-sm truncate group-hover:text-emerald-700 transition">
+                  {{ conv.annonce.titre }}
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  {% if request.user == conv.vendeur %}
+                    Acheteur : {{ conv.acheteur.get_full_name }}
+                  {% else %}
+                    Vendeur : {{ conv.vendeur.get_full_name }}
+                  {% endif %}
+                </p>
+              </div>
+              <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                <span class="text-xs text-gray-400">{{ conv.date_modification|date:"d/m H:i" }}</span>
+                {% if non_lus %}
+                  <span class="inline-flex items-center justify-center w-5 h-5 bg-emerald-600 text-white text-xs font-bold rounded-full">
+                    {{ non_lus }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if dernier %}
+              <p class="text-sm text-gray-500 mt-2 truncate {% if non_lus %}font-medium text-gray-800{% endif %}">
+                {% if dernier.expediteur == request.user %}Vous : {% endif %}
+                {{ dernier.contenu }}
+              </p>
+            {% endif %}
+          </div>
+        </a>
+        {% endwith %}
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
+      <div class="text-5xl mb-4">💬</div>
+      <p class="text-gray-500 font-medium mb-1">Aucune conversation pour l'instant</p>
+      <p class="text-gray-400 text-sm">Visitez une annonce et envoyez un message au vendeur pour démarrer.</p>
+      <a href="{% url 'listings:liste' %}"
+         class="mt-6 inline-block bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">
+        Voir les terrains
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

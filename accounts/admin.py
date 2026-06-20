@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, Avis
 
 
 @admin.register(User)
@@ -12,3 +12,16 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Profil AgroTech', {'fields': ('role', 'telephone', 'ville', 'bio', 'photo_profil')}),
     )
+
+
+@admin.register(Avis)
+class AvisAdmin(admin.ModelAdmin):
+    list_display = ('auteur', 'vendeur', 'note', 'extrait_commentaire', 'date_creation')
+    list_filter = ('note',)
+    search_fields = ('auteur__email', 'auteur__first_name', 'vendeur__email', 'commentaire')
+    ordering = ('-date_creation',)
+    raw_id_fields = ('auteur', 'vendeur')
+
+    @admin.display(description='Commentaire')
+    def extrait_commentaire(self, obj):
+        return (obj.commentaire[:80] + '…') if len(obj.commentaire) > 80 else obj.commentaire

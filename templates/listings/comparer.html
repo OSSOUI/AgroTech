@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Comparaison de terrains — AgroTech{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+        </svg>
+        Comparaison de terrains
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">{{ annonces|length }} terrain{{ annonces|length|pluralize }} sélectionné{{ annonces|length|pluralize }}</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="clearAndGoBack()"
+              class="text-sm text-gray-500 hover:text-red-500 transition font-medium flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Vider la sélection
+      </button>
+      <a href="{% url 'listings:liste' %}"
+         class="text-sm text-emerald-700 hover:underline font-medium flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Ajouter un terrain
+      </a>
+    </div>
+  </div>
+
+  <!-- Légende badges -->
+  <div class="flex items-center gap-4 mb-6 text-xs text-gray-500">
+    <span class="flex items-center gap-1.5">
+      <span class="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
+      Meilleure valeur
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span>✓</span> Disponible
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="text-gray-300">✗</span> Non disponible
+    </span>
+  </div>
+
+  <!-- ═══ Table de comparaison ═══ -->
+  <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white">
+    <table class="w-full text-sm table-fixed">
+
+      <!-- ── Photos & titres ── -->
+      <thead>
+        <tr class="border-b border-gray-100">
+          <th class="w-44 px-6 py-5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">
+            Terrain
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-5 align-top border-l border-gray-100 {% if forloop.first %}{% endif %}">
+            <!-- Photo -->
+            <a href="{{ annonce.get_absolute_url }}" class="block mb-3">
+              {% with photo=annonce.get_photo_principale %}
+              {% if photo %}
+                <img src="{{ photo.image.url }}" alt="{{ annonce.titre }}"
+                     class="w-full h-40 object-cover rounded-xl hover:opacity-90 transition" />
+              {% else %}
+                <div class="w-full h-40 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-300">
+                  <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+              {% endif %}
+              {% endwith %}
+            </a>
+            <!-- Titre -->
+            <a href="{{ annonce.get_absolute_url }}"
+               class="block font-semibold text-gray-900 hover:text-emerald-700 transition leading-snug mb-1 line-clamp-2">
+              {{ annonce.titre }}
+            </a>
+            <p class="text-xs text-gray-400 mb-3">{{ annonce.ville }} · {{ annonce.get_region_display }}</p>
+            <!-- CTA -->
+            <a href="{{ annonce.get_absolute_url }}"
+               class="block text-center bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+              Voir l'annonce
+            </a>
+          </td>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-100">
+
+        <!-- Prix total -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Prix total
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100">
+            <div class="text-xl font-extrabold text-emerald-700">
+              {{ annonce.prix|floatformat:0 }} <span class="text-sm font-semibold">MAD</span>
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Prix / hectare -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Prix / hectare
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 {% if annonce.pk == best_prix_ha_id %}bg-emerald-50{% endif %}">
+            {% if annonce.prix_par_hectare %}
+              <div class="font-bold text-gray-900">{{ annonce.prix_par_hectare|floatformat:0 }} MAD/ha</div>
+              {% if annonce.pk == best_prix_ha_id %}
+                <span class="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                  Meilleur prix
+                </span>
+              {% endif %}
+            {% else %}
+              <span class="text-gray-300">—</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Surface -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Surface
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 {% if annonce.pk == best_surface_id %}bg-emerald-50{% endif %}">
+            <div class="font-bold text-gray-900 text-lg">{{ annonce.surface }} <span class="text-sm font-normal text-gray-500">ha</span></div>
+            {% if annonce.pk == best_surface_id %}
+              <span class="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Plus grand
+              </span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Région -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Région
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 text-gray-700 font-medium">
+            {{ annonce.get_region_display }}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Ville -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Ville
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 text-gray-700">
+            {{ annonce.ville }}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Type de culture -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Type de culture
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100">
+            <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              {{ annonce.get_type_culture_display }}
+            </span>
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Titre foncier -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Titre foncier
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 text-gray-700 text-sm">
+            {{ annonce.get_type_titre_foncier_display }}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Accès eau -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            💧 Accès à l'eau
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100">
+            {% if annonce.acces_eau %}
+              <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm">
+                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Oui
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-gray-300 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Non
+              </span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Accès route -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            🛣️ Route bitumée
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100">
+            {% if annonce.acces_route %}
+              <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm">
+                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Oui
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-gray-300 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Non
+              </span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Électricité -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            ⚡ Électricité
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100">
+            {% if annonce.electricite %}
+              <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-sm">
+                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Oui
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-gray-300 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Non
+              </span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Vues -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Vues
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 text-gray-600 text-sm">
+            {{ annonce.vues }} vue{{ annonce.vues|pluralize }}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Date de publication -->
+        <tr class="hover:bg-gray-50/50 transition">
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/60">
+            Publié le
+          </th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-4 border-l border-gray-100 text-gray-500 text-sm">
+            {{ annonce.date_creation|date:"j F Y" }}
+          </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Action finale -->
+        <tr class="bg-gray-50/60">
+          <th class="px-6 py-5 bg-gray-50/60"></th>
+          {% for annonce in annonces %}
+          <td class="px-5 py-5 border-l border-gray-100">
+            <div class="flex flex-col gap-2">
+              <a href="{{ annonce.get_absolute_url }}"
+                 class="block text-center bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold py-2.5 rounded-xl transition">
+                Voir l'annonce complète
+              </a>
+              {% with wa=annonce.vendeur.whatsapp_number %}
+              {% if wa %}
+                {% with msg="Bonjour, je suis intéressé par votre annonce sur AgroTech : "|add:annonce.titre %}
+                <a href="https://wa.me/{{ wa }}?text={{ msg|urlencode }}"
+                   target="_blank" rel="noopener"
+                   class="block text-center bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-semibold py-2.5 rounded-xl transition">
+                  WhatsApp
+                </a>
+                {% endwith %}
+              {% endif %}
+              {% endwith %}
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Lien retour -->
+  <div class="mt-8 text-center">
+    <a href="{% url 'listings:liste' %}" class="text-sm text-gray-400 hover:text-emerald-700 transition">
+      ← Revenir à la liste des terrains
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function clearAndGoBack() {
+    localStorage.removeItem('agrotech_compare');
+    window.location.href = '{% url "listings:liste" %}';
+  }
+</script>
+{% endblock %}
