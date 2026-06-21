@@ -18,7 +18,7 @@ def inscription(request):
         form = InscriptionVendeurForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f'Bienvenue {user.first_name} ! Votre compte vendeur a été créé.')
             return redirect('accounts:tableau_de_bord')
     else:

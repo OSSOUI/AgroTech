@@ -11,5 +11,5 @@ urlpatterns = [
     path('profil/', views.profil, name='profil'),
     path('analytiques/', views.analytics_vendeur, name='analytics'),
     path('vendeur/<int:pk>/', views.profil_vendeur, name='profil_vendeur'),
-    path('vendeur/<int:pk>/avis/', views.laisser_avis, name='laisser_avis'),
+    path('vendeur/<int:vendeur_pk>/avis/', views.laisser_avis, name='laisser_avis'),
 ]

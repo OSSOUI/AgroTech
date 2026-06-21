@@ -1,0 +1,11 @@
+[run]
+source = accounts,listings,api,messaging
+omit =
+    */migrations/*
+    */tests/*
+    venv/*
+
+[report]
+show_missing = True
+skip_covered = False
+fail_under = 80
