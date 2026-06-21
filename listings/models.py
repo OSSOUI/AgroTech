@@ -146,10 +146,11 @@ class Boost(models.Model):
     def activer(self):
         from django.utils import timezone
         from datetime import timedelta
+        now = timezone.now()
         self.statut = 'actif'
-        self.date_debut = timezone.now()
-        self.date_fin = timezone.now() + timedelta(days=self.duree_jours)
-        self.save()
+        self.date_debut = now
+        self.date_fin = now + timedelta(days=self.duree_jours)
+        self.save(update_fields=['statut', 'date_debut', 'date_fin'])
 
     @property
     def est_actif(self):

@@ -105,3 +105,14 @@ class ProfilForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'telephone', 'ville', 'bio', 'photo_profil')
+
+    def clean_photo_profil(self):
+        photo = self.cleaned_data.get('photo_profil')
+        if photo:
+            import os
+            ext = os.path.splitext(photo.name)[1].lower()
+            if ext not in {'.jpg', '.jpeg', '.png', '.webp'}:
+                raise forms.ValidationError("Format non supporté. Utilisez JPG, PNG ou WebP.")
+            if photo.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("La photo ne doit pas dépasser 5 Mo.")
+        return photo

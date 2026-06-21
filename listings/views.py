@@ -28,6 +28,20 @@ COORDS_REGIONS = {
     'dakhla':         (23.6847, -15.9571),
 }
 
+_ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+_MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 Mo
+
+
+def _valider_photos(photos):
+    import os
+    valides = []
+    for photo in photos:
+        ext = os.path.splitext(photo.name)[1].lower()
+        if ext in _ALLOWED_IMAGE_EXTENSIONS and photo.size <= _MAX_IMAGE_SIZE:
+            valides.append(photo)
+    return valides
+
+
 BOOST_PACKAGES = [
     {'duree': 7,  'prix': 199, 'label': 'Starter',  'description': 'Idéal pour tester la visibilité', 'popular': False},
     {'duree': 14, 'prix': 349, 'label': 'Pro',       'description': 'Le plus demandé par nos vendeurs', 'popular': True},
@@ -180,13 +194,16 @@ def creer_annonce(request):
     if request.method == 'POST':
         form = AnnonceForm(request.POST, request.FILES)
         photos = request.FILES.getlist('photos')
+        photos_valides = _valider_photos(photos[:8])
         if form.is_valid():
-            annonce = form.save(commit=False)
-            annonce.vendeur = request.user
-            annonce.statut = Annonce.ACTIVE
-            annonce.save()
-            for i, photo in enumerate(photos[:8]):
-                AnnoncePhoto.objects.create(annonce=annonce, image=photo, ordre=i)
+            from django.db import transaction
+            with transaction.atomic():
+                annonce = form.save(commit=False)
+                annonce.vendeur = request.user
+                annonce.statut = Annonce.ACTIVE
+                annonce.save()
+                for i, photo in enumerate(photos_valides):
+                    AnnoncePhoto.objects.create(annonce=annonce, image=photo, ordre=i)
             messages.success(request, 'Votre annonce a été publiée avec succès !')
             return redirect('listings:detail', pk=annonce.pk)
     else:
@@ -200,9 +217,10 @@ def modifier_annonce(request, pk):
     if request.method == 'POST':
         form = AnnonceForm(request.POST, request.FILES, instance=annonce)
         photos = request.FILES.getlist('photos')
+        photos_valides = _valider_photos(photos[:8])
         if form.is_valid():
             form.save()
-            for i, photo in enumerate(photos[:8]):
+            for i, photo in enumerate(photos_valides):
                 AnnoncePhoto.objects.create(annonce=annonce, image=photo, ordre=annonce.photos.count() + i)
             messages.success(request, 'Annonce mise à jour.')
             return redirect('listings:detail', pk=annonce.pk)

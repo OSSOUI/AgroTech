@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.views.decorators.http import require_POST
 
 from listings.models import Annonce
 from .models import Conversation, Message
@@ -13,9 +14,11 @@ def inbox(request):
         Q(acheteur=request.user) | Q(vendeur=request.user)
     ).select_related('annonce', 'acheteur', 'vendeur').prefetch_related('messages')
 
+    user_id = request.user.id
     convs_data = []
     for conv in conversations:
-        non_lus = conv.non_lus_pour(request.user)
+        # Count from prefetch cache to avoid N+1 queries
+        non_lus = sum(1 for m in conv.messages.all() if not m.lu and m.expediteur_id != user_id)
         convs_data.append({'conv': conv, 'non_lus': non_lus})
 
     return render(request, 'messaging/inbox.html', {'convs_data': convs_data})
@@ -53,6 +56,7 @@ def conversation(request, conv_pk):
 
 
 @login_required
+@require_POST
 def demarrer_conversation(request, annonce_pk):
     annonce = get_object_or_404(Annonce, pk=annonce_pk, statut='active')
 

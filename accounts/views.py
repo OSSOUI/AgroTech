@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db.models import Avg, Exists, OuterRef
 from django.utils import timezone
@@ -35,8 +36,10 @@ def connexion(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f'Bon retour, {user.first_name} !')
-            next_url = request.GET.get('next', 'accounts:tableau_de_bord')
-            return redirect(next_url)
+            next_url = request.GET.get('next')
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
+            return redirect('accounts:tableau_de_bord')
     else:
         form = ConnexionForm()
     return render(request, 'accounts/connexion.html', {'form': form})
@@ -75,7 +78,8 @@ def profil(request):
     if request.method == 'POST':
         form = ProfilForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
+            user = form.save(commit=False)
+            user.save(update_fields=['first_name', 'last_name', 'telephone', 'ville', 'bio', 'photo_profil'])
             messages.success(request, 'Votre profil a été mis à jour.')
             return redirect('accounts:profil')
     else:

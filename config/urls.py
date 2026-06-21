@@ -12,4 +12,6 @@ urlpatterns = [
     path('messages/', include('messaging.urls', namespace='messaging')),
     # allauth — social auth + password reset
     path('auth/', include('allauth.urls')),
+    # API REST — Flutter mobile
+    path('api/v1/', include('api.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
