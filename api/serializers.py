@@ -77,8 +77,6 @@ class AnnonceListSerializer(serializers.ModelSerializer):
     region_display = serializers.CharField(source='get_region_display', read_only=True)
     type_culture_display = serializers.CharField(source='get_type_culture_display', read_only=True)
     type_titre_display = serializers.CharField(source='get_type_titre_foncier_display', read_only=True)
-    est_booste = serializers.BooleanField(read_only=True, default=False)
-
     class Meta:
         model = Annonce
         fields = [
@@ -88,7 +86,7 @@ class AnnonceListSerializer(serializers.ModelSerializer):
             'type_titre_foncier', 'type_titre_display',
             'acces_eau', 'acces_route', 'electricite',
             'vues', 'statut', 'date_creation',
-            'vendeur', 'photo_principale', 'est_booste',
+            'vendeur', 'photo_principale',
         ]
 
     def get_photo_principale(self, obj):

@@ -4,13 +4,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.utils import timezone
-
 from django.db.models import F
-from .models import Annonce, AnnoncePhoto, Favori, Boost, VueAnnonce
+from .models import Annonce, AnnoncePhoto, Favori, VueAnnonce
 from .forms import AnnonceForm, FiltreAnnonceForm
 
 COORDS_REGIONS = {
@@ -42,21 +40,11 @@ def _valider_photos(photos):
     return valides
 
 
-BOOST_PACKAGES = [
-    {'duree': 7,  'prix': 199, 'label': 'Starter',  'description': 'Idéal pour tester la visibilité', 'popular': False},
-    {'duree': 14, 'prix': 349, 'label': 'Pro',       'description': 'Le plus demandé par nos vendeurs', 'popular': True},
-    {'duree': 30, 'prix': 599, 'label': 'Premium',   'description': 'Visibilité maximale sur un mois',  'popular': False},
-]
-BOOST_TARIFS = {pkg['duree']: pkg['prix'] for pkg in BOOST_PACKAGES}
-
-
 def home(request):
-    boost_qs = Boost.objects.filter(annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now())
     annonces_recentes = (
         Annonce.objects.filter(statut='active')
-        .annotate(est_booste=Exists(boost_qs))
         .select_related('vendeur').prefetch_related('photos')
-        .order_by('-est_booste', '-date_creation')[:6]
+        .order_by('-date_creation')[:6]
     )
     stats = {
         'total_annonces': Annonce.objects.filter(statut='active').count(),
@@ -70,10 +58,8 @@ def home(request):
 
 def liste_annonces(request):
     form = FiltreAnnonceForm(request.GET)
-    boost_qs = Boost.objects.filter(annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now())
     annonces = (
         Annonce.objects.filter(statut='active')
-        .annotate(est_booste=Exists(boost_qs))
         .select_related('vendeur').prefetch_related('photos')
     )
 
@@ -122,7 +108,7 @@ def liste_annonces(request):
             'approx': approx,
         })
 
-    annonces = annonces.order_by('-est_booste', '-date_creation')
+    annonces = annonces.order_by('-date_creation')
 
     paginator = Paginator(annonces, 12)
     page = request.GET.get('page', 1)
@@ -238,42 +224,6 @@ def supprimer_annonce(request, pk):
         return redirect('accounts:tableau_de_bord')
     return render(request, 'listings/supprimer.html', {'annonce': annonce})
 
-
-@login_required
-def commander_boost(request, pk):
-    annonce = get_object_or_404(Annonce, pk=pk, vendeur=request.user, statut='active')
-    boost_en_cours = annonce.boost_actif
-
-    if request.method == 'POST':
-        try:
-            duree = int(request.POST.get('duree', 0))
-        except (ValueError, TypeError):
-            duree = 0
-
-        if duree not in BOOST_TARIFS:
-            messages.error(request, 'Forfait invalide.')
-            return redirect('listings:boost_commander', pk=pk)
-
-        boost = Boost.objects.create(
-            annonce=annonce,
-            vendeur=request.user,
-            duree_jours=duree,
-            prix_paye=BOOST_TARIFS[duree],
-        )
-        boost.activer()
-        return redirect('listings:boost_confirmation', boost_pk=boost.pk)
-
-    return render(request, 'listings/boost_commander.html', {
-        'annonce': annonce,
-        'packages': BOOST_PACKAGES,
-        'boost_en_cours': boost_en_cours,
-    })
-
-
-@login_required
-def boost_confirmation(request, boost_pk):
-    boost = get_object_or_404(Boost, pk=boost_pk, vendeur=request.user)
-    return render(request, 'listings/boost_confirmation.html', {'boost': boost})
 
 
 def comparer_annonces(request):

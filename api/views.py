@@ -1,5 +1,4 @@
-from django.db.models import Q, Exists, OuterRef, F
-from django.utils import timezone
+from django.db.models import Q, F
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -8,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import User, Avis
-from listings.models import Annonce, Favori, Boost, VueAnnonce
+from listings.models import Annonce, Favori, VueAnnonce
 from messaging.models import Conversation, Message
 from .serializers import (
     UserPublicSerializer, UserMeSerializer, InscriptionSerializer,
@@ -52,15 +51,11 @@ class AnnonceListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        boost_qs = Boost.objects.filter(
-            annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now()
-        )
         qs = (
             Annonce.objects.filter(statut='active')
-            .annotate(est_booste=Exists(boost_qs))
             .select_related('vendeur')
             .prefetch_related('photos')
-            .order_by('-est_booste', '-date_creation')
+            .order_by('-date_creation')
         )
 
         q = self.request.query_params.get('q')
@@ -88,12 +83,8 @@ class AnnonceDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        boost_qs = Boost.objects.filter(
-            annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now()
-        )
         return (
             Annonce.objects.filter(statut='active')
-            .annotate(est_booste=Exists(boost_qs))
             .select_related('vendeur')
             .prefetch_related('photos')
         )
@@ -115,10 +106,8 @@ class FavorisView(generics.ListAPIView):
 
     def get_queryset(self):
         ids = Favori.objects.filter(utilisateur=self.request.user).values_list('annonce_id', flat=True)
-        boost_qs = Boost.objects.filter(annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now())
         return (
             Annonce.objects.filter(pk__in=ids, statut='active')
-            .annotate(est_booste=Exists(boost_qs))
             .select_related('vendeur')
             .prefetch_related('photos')
         )
@@ -141,10 +130,8 @@ class MesAnnoncesView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        boost_qs = Boost.objects.filter(annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now())
         return (
             Annonce.objects.filter(vendeur=self.request.user)
-            .annotate(est_booste=Exists(boost_qs))
             .select_related('vendeur')
             .prefetch_related('photos')
             .order_by('-date_creation')
@@ -158,12 +145,10 @@ class ProfilVendeurView(APIView):
 
     def get(self, request, pk):
         vendeur = generics.get_object_or_404(User, pk=pk)
-        boost_qs = Boost.objects.filter(annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now())
         annonces = (
             Annonce.objects.filter(vendeur=vendeur, statut='active')
-            .annotate(est_booste=Exists(boost_qs))
             .prefetch_related('photos')
-            .order_by('-est_booste', '-date_creation')[:6]
+            .order_by('-date_creation')[:6]
         )
         avis = Avis.objects.filter(vendeur=vendeur).select_related('auteur')
 

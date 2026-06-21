@@ -4,12 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
-from django.db.models import Avg, Exists, OuterRef
-from django.utils import timezone
+from django.db.models import Avg
 
 from .models import User, Avis
 from .forms import InscriptionVendeurForm, ConnexionForm, ProfilForm
-from listings.models import Annonce, Boost, Favori
+from listings.models import Annonce, Favori
 
 
 def inscription(request):
@@ -54,12 +53,8 @@ def deconnexion(request):
 
 @login_required
 def tableau_de_bord(request):
-    boost_qs = Boost.objects.filter(
-        annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now()
-    )
     annonces = (
         Annonce.objects.filter(vendeur=request.user)
-        .annotate(est_booste=Exists(boost_qs))
         .order_by('-date_creation')
     )
     stats = {
@@ -92,14 +87,10 @@ def profil_vendeur(request, pk):
 
     vendeur = get_object_or_404(User, pk=pk)
 
-    boost_qs = Boost.objects.filter(
-        annonce=OuterRef('pk'), statut='actif', date_fin__gt=timezone.now()
-    )
     annonces_qs = (
         Annonce.objects.filter(vendeur=vendeur, statut='active')
-        .annotate(est_booste=Exists(boost_qs))
         .prefetch_related('photos')
-        .order_by('-est_booste', '-date_creation')
+        .order_by('-date_creation')
     )
     nb_annonces = annonces_qs.count()
     annonces = list(annonces_qs[:6])

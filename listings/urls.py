@@ -12,6 +12,4 @@ urlpatterns = [
     path('<int:pk>/favori/', views.toggle_favori, name='toggle_favori'),
     path('mes-favoris/', views.mes_favoris, name='mes_favoris'),
     path('comparer/', views.comparer_annonces, name='comparer'),
-    path('<int:pk>/boost/', views.commander_boost, name='boost_commander'),
-    path('boost/<int:boost_pk>/confirmation/', views.boost_confirmation, name='boost_confirmation'),
 ]
